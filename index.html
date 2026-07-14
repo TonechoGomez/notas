@@ -31,7 +31,7 @@
             margin: 0;
             padding: 0;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            -webkit-tap-highlight-color: transparent; /* Evita el cuadro azul al pulsar en el móvil */
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
@@ -184,6 +184,57 @@
             color: #64748b;
         }
 
+        /* Contenedor para previsualizar la foto antes de guardarla */
+        .preview-container {
+            display: none;
+            position: relative;
+            margin-bottom: 12px;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid var(--border-glass);
+        }
+
+        .preview-container img {
+            width: 100%;
+            max-height: 200px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .btn-remove-preview {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Estado de grabación de Audio */
+        .recording-status {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--danger);
+            font-weight: 600;
+            margin-bottom: 10px;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+
         .media-buttons {
             display: flex;
             justify-content: space-between;
@@ -207,6 +258,12 @@
             color: var(--text-muted);
         }
 
+        .btn-action.active {
+            background: rgba(255, 107, 107, 0.2);
+            color: var(--danger);
+            border-color: var(--danger);
+        }
+
         .btn-add-note {
             background: linear-gradient(135deg, #1dd1a1, #10ac84);
             color: white;
@@ -215,7 +272,7 @@
             font-weight: 700;
         }
 
-        /* --- LISTADO DE NOTAS ADAPTADO --- */
+        /* --- LISTADO DE NOTAS --- */
         .notes-list {
             display: flex;
             flex-direction: column;
@@ -230,14 +287,14 @@
             padding: 14px;
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
             gap: 12px;
         }
 
         .note-content-wrapper {
             display: flex;
             flex-direction: column;
-            gap: 4px;
+            gap: 8px;
             flex-grow: 1;
             word-break: break-word;
         }
@@ -246,6 +303,22 @@
             font-size: 14px;
             line-height: 1.4;
             color: var(--text-light);
+        }
+
+        .note-image {
+            width: 100%;
+            max-height: 180px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-top: 5px;
+            border: 1px solid var(--border-glass);
+        }
+
+        .note-audio {
+            width: 100%;
+            height: 36px;
+            margin-top: 5px;
+            border-radius: 10px;
         }
 
         .note-expiry {
@@ -311,9 +384,23 @@
         const sectionTitle = document.getElementById('section-title');
         const noteTextInput = document.getElementById('note-text-input');
         const notesListContainer = document.getElementById('notes-list-container');
+        
+        // Elementos multimedia
+        const cameraInput = document.getElementById('camera-input');
+        const previewContainer = document.getElementById('preview-container');
+        const imagePreview = document.getElementById('image-preview');
+        const recordingStatus = document.getElementById('recording-status');
+        const btnMic = document.getElementById('btn-mic');
 
         let categoriaActual = '';
         let currentQueryRef = null;
+        
+        // Variables para foto y audio
+        let base64ImageData = null;
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let base64AudioData = null;
+        let isRecording = false;
 
         // Navegación: Abrir sección y sincronizar en tiempo real con tu base de datos
         window.abrirSeccion = function(categoria) {
@@ -321,14 +408,12 @@
             homeScreen.style.display = 'none';
             sectionScreen.style.display = 'flex';
             sectionTitle.textContent = categoria;
-            noteTextInput.value = ''; 
+            resetMediaForm();
 
             if (currentQueryRef) {
-                // Limpiar conexiones anteriores
                 onValue(currentQueryRef, () => {});
             }
 
-            // Referencia a las notas en Realtime Database
             const dbRef = ref(db, 'notas');
             currentQueryRef = dbRef;
             
@@ -353,13 +438,99 @@
             sectionScreen.style.display = 'none';
             homeScreen.style.display = 'block';
             categoriaActual = '';
+            resetMediaForm();
         }
 
-        // Guardar Nota Nueva en la nube
+        // --- FUNCIONES MULTIMEDIA ---
+
+        // Abrir Cámara / Galería
+        window.activarCamara = function() {
+            cameraInput.click();
+        }
+
+        // Procesar la foto seleccionada
+        cameraInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    base64ImageData = event.target.result;
+                    imagePreview.src = base64ImageData;
+                    previewContainer.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Cancelar foto adjunta
+        window.cancelarFoto = function() {
+            base64ImageData = null;
+            imagePreview.src = '';
+            previewContainer.style.display = 'none';
+            cameraInput.value = '';
+        }
+
+        // Grabar Audio utilizando micrófono nativo
+        window.toggleGrabacionAudio = async function() {
+            if (!isRecording) {
+                // Iniciar grabación
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+
+                    mediaRecorder.addEventListener("dataavailable", event => {
+                        audioChunks.push(event.data);
+                    });
+
+                    mediaRecorder.addEventListener("stop", () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                            base64AudioData = reader.result;
+                            recordingStatus.innerHTML = `<span class="material-icons-round" style="font-size:16px;">check_circle</span> Audio grabado listo para guardar.`;
+                        };
+                        reader.readAsDataURL(audioBlob);
+                        
+                        // Apagar el micrófono del teléfono
+                        stream.getTracks().forEach(track => track.stop());
+                    });
+
+                    mediaRecorder.start();
+                    isRecording = true;
+                    btnMic.classList.add('active');
+                    recordingStatus.style.display = 'flex';
+                    recordingStatus.innerHTML = `<span class="material-icons-round" style="font-size:16px; color:#ff6b6b;">fiber_manual_record</span> Grabando nota de voz... (pulsa el micro para parar)`;
+                } catch (err) {
+                    alert("Por favor, acepta los permisos de micrófono en tu navegador para grabar audios.");
+                }
+            } else {
+                // Detener grabación
+                if (mediaRecorder) {
+                    mediaRecorder.stop();
+                }
+                isRecording = false;
+                btnMic.classList.remove('active');
+            }
+        }
+
+        // Limpiar multimedia del formulario
+        function resetMediaForm() {
+            cancelarFoto();
+            base64AudioData = null;
+            isRecording = false;
+            if (btnMic) btnMic.classList.remove('active');
+            if (recordingStatus) recordingStatus.style.display = 'none';
+            if (noteTextInput) noteTextInput.value = '';
+        }
+
+        // Guardar Nota Nueva en la nube con multimedia opcional
         window.guardarNuevaNota = async function() {
             const texto = noteTextInput.value.trim();
-            if (texto === '') {
-                alert('Escribe un texto antes de guardar.');
+            
+            // Permitimos guardar si hay texto, foto o audio
+            if (texto === '' && !base64ImageData && !base64AudioData) {
+                alert('Escribe un texto o añade multimedia antes de guardar.');
                 return;
             }
 
@@ -369,17 +540,20 @@
                 await set(nuevaNotaRef, {
                     categoria: categoriaActual,
                     contenido: texto,
+                    foto: base64ImageData || null,
+                    audio: base64AudioData || null,
                     eliminada: false,
                     fechaEliminacion: null,
                     fechaCreacion: Date.now()
                 });
-                noteTextInput.value = ''; 
+                
+                resetMediaForm();
             } catch (error) {
                 alert("No se ha podido guardar la nota: " + error.message);
             }
         }
 
-        // Tachar una nota (Se queda una semana guardada en la papelera)
+        // Tachar una nota
         window.marcarComoEliminada = async function(id) {
             try {
                 const notaRef = ref(db, `notas/${id}`);
@@ -405,7 +579,7 @@
             }
         }
 
-        // Mostrar notas y controlar el temporizador automático de borrado (7 días)
+        // Mostrar notas con soporte para Foto y Audio
         async function renderizarNotas(notas) {
             notesListContainer.innerHTML = '';
             const ahora = Date.now();
@@ -416,7 +590,7 @@
                 return;
             }
 
-            // Ordenar: Primero las activas (las nuevas arriba) y al final las tachadas
+            // Ordenar: Primero las activas y al final las tachadas
             notas.sort((a, b) => {
                 if (a.eliminada && !b.eliminada) return 1;
                 if (!a.eliminada && b.eliminada) return -1;
@@ -440,6 +614,18 @@
 
                 let botonAccion = '';
                 let textoExpiracion = '';
+                let elementoFoto = '';
+                let elementoAudio = '';
+
+                // Si la nota tiene foto
+                if (nota.foto) {
+                    elementoFoto = `<img src="${nota.foto}" class="note-image" alt="Imagen de nota">`;
+                }
+
+                // Si la nota tiene audio grabado
+                if (nota.audio) {
+                    elementoAudio = `<audio controls class="note-audio" src="${nota.audio}"></audio>`;
+                }
 
                 if (nota.eliminada) {
                     const milisegundosRestantes = (nota.fechaEliminacion + unaSemanaEnMilisegundos) - ahora;
@@ -461,7 +647,9 @@
 
                 notaDiv.innerHTML = `
                     <div class="note-content-wrapper">
-                        <div class="note-content">${nota.contenido}</div>
+                        ${nota.contenido ? `<div class="note-content">${nota.contenido}</div>` : ''}
+                        ${elementoFoto}
+                        ${elementoAudio}
                         ${textoExpiracion}
                     </div>
                     <div class="note-actions">
@@ -511,13 +699,23 @@
 
             <div class="note-form">
                 <textarea id="note-text-input" class="note-input" placeholder="¿Qué tienes en mente hoy?..."></textarea>
+                
+                <div id="preview-container" class="preview-container">
+                    <button class="btn-remove-preview" onclick="cancelarFoto()">×</button>
+                    <img id="image-preview" src="" alt="Previsualización">
+                </div>
+
+                <div id="recording-status" class="recording-status"></div>
+
+                <input type="file" id="camera-input" accept="image/*" capture="environment" style="display: none;">
+
                 <div class="media-buttons">
                     <div style="display: flex; gap: 8px;">
-                        <button class="btn-action" onclick="alert('Funcionalidad de cámara reservada para la integración móvil.')">
+                        <button class="btn-action" onclick="activarCamara()">
                             <span class="material-icons-round" style="font-size: 18px; color: #ff6b81;">photo_camera</span>
                             Foto
                         </button>
-                        <button class="btn-action" onclick="alert('Funcionalidad de audio reservada para la integración móvil.')">
+                        <button id="btn-mic" class="btn-action" onclick="toggleGrabacionAudio()">
                             <span class="material-icons-round" style="font-size: 18px; color: #1dd1a1;">mic</span>
                             Audio
                         </button>
