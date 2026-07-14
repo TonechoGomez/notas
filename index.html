@@ -4,8 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Notas Tonecho</title>
+    <!-- Enlace al archivo de instrucciones del móvil -->
     <link rel="manifest" href="manifest.json">
     
+    <!-- Iconos modernos de Google -->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
     <style>
         /* --- DISEÑO MODO OSCURO PREMIUM ADAPTADO PARA MÓVILES --- */
@@ -51,18 +53,27 @@
             border-radius: 24px;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
             padding: 20px;
-            min-height: 90vh;
+            height: calc(100vh - 20px); /* Ajusta el contenedor al alto total de la pantalla */
             display: flex;
             flex-direction: column;
             border: 1px solid var(--border-glass);
-            margin-top: 10px;
+            overflow: hidden; /* Evita scrolls raros en la pantalla de inicio */
+        }
+
+        /* Pantalla principal que envuelve todo el menú de inicio */
+        #home-screen {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            width: 100%;
         }
 
         header {
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             text-align: center;
             border-bottom: 1px solid var(--border-glass);
             padding-bottom: 15px;
+            flex-shrink: 0; /* Impide que la cabecera se encoja */
         }
 
         h1 {
@@ -78,27 +89,30 @@
             -webkit-text-fill-color: transparent;
         }
 
-        /* --- CUADRÍCULA DE CATEGORÍAS --- */
+        /* --- CUADRÍCULA DE CATEGORÍAS MEJORADA (PANTALLA COMPLETA) --- */
         .categories-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr; /* Fuerza a que haya dos filas de igual tamaño */
             gap: 15px;
-            margin-top: 10px;
+            flex-grow: 1; /* Hace que la cuadrícula se estire para ocupar todo el espacio que queda libre */
+            margin-bottom: 10px;
         }
 
         .category-card {
             border: none;
-            border-radius: 18px;
-            padding: 22px 15px;
+            border-radius: 20px; /* Bordes un poco más redondeados para los botones grandes */
+            padding: 20px;
             cursor: pointer;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            gap: 12px;
             transition: all 0.2s ease;
             color: white;
             box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+            height: 100%; /* Se estira en su celda */
         }
 
         .cat-personal { background: var(--color-personal); }
@@ -112,21 +126,21 @@
         }
 
         .category-card span.material-icons-round {
-            font-size: 36px;
-            text-shadow: 0 3px 6px rgba(0,0,0,0.2);
+            font-size: 52px; /* Iconos más grandes acorde al tamaño del botón */
+            text-shadow: 0 4px 8px rgba(0,0,0,0.25);
         }
 
         .category-card .cat-name {
-            font-size: 16px;
-            font-weight: 700;
+            font-size: 18px; /* Texto un pelín más grande y legible */
+            font-weight: 800;
             letter-spacing: 0.5px;
         }
 
-        /* --- PANTALLA DE SECCIÓN --- */
+        /* --- PANTALLA DE SECCIÓN (Mantiene scroll para ver tus notas) --- */
         .section-view {
             display: none;
             flex-direction: column;
-            flex-grow: 1;
+            height: 100%;
         }
 
         .section-header {
@@ -136,6 +150,7 @@
             margin-bottom: 20px;
             padding-bottom: 12px;
             border-bottom: 1px solid var(--border-glass);
+            flex-shrink: 0;
         }
 
         .btn-back {
@@ -158,14 +173,15 @@
             flex-grow: 1;
         }
 
-        /* --- FORMULARIO DE NOTA ADAPTADO --- */
+        /* --- FORMULARIO DE NOTA --- */
         .note-form {
             background: var(--bg-input);
             border: 1px solid var(--border-glass);
             border-radius: 16px;
             padding: 14px;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+            flex-shrink: 0;
         }
 
         .note-input {
@@ -184,7 +200,7 @@
             color: #64748b;
         }
 
-        /* Contenedor para previsualizar la foto antes de guardarla */
+        /* Previsualización multimedia */
         .preview-container {
             display: none;
             position: relative;
@@ -196,7 +212,7 @@
 
         .preview-container img {
             width: 100%;
-            max-height: 200px;
+            max-height: 150px;
             object-fit: cover;
             display: block;
         }
@@ -217,7 +233,6 @@
             justify-content: center;
         }
 
-        /* Estado de grabación de Audio */
         .recording-status {
             display: none;
             align-items: center;
@@ -272,12 +287,24 @@
             font-weight: 700;
         }
 
-        /* --- LISTADO DE NOTAS --- */
+        /* --- LISTADO DE NOTAS CON SCROLL INDEPENDIENTE --- */
         .notes-list {
             display: flex;
             flex-direction: column;
             gap: 12px;
             margin-top: 5px;
+            overflow-y: auto; /* Permite hacer scroll para ver notas viejas sin mover toda la app */
+            flex-grow: 1;
+            padding-right: 2px;
+        }
+
+        /* Ocultar barra de scroll horrible en móviles */
+        .notes-list::-webkit-scrollbar {
+            width: 4px;
+        }
+        .notes-list::-webkit-scrollbar-thumb {
+            background: var(--border-glass);
+            border-radius: 4px;
         }
 
         .note-item {
@@ -289,6 +316,7 @@
             justify-content: space-between;
             align-items: flex-start;
             gap: 12px;
+            flex-shrink: 0;
         }
 
         .note-content-wrapper {
@@ -358,6 +386,7 @@
         }
     </style>
 
+    <!-- ENLACES DE GOOGLE FIREBASE CON TUS CLAVES REALES -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getDatabase, ref, set, push, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
@@ -436,7 +465,7 @@
         // Navegación: Volver al menú principal
         window.volverAInicio = function() {
             sectionScreen.style.display = 'none';
-            homeScreen.style.display = 'block';
+            homeScreen.style.display = 'flex'; // Cambiado a flex para mantener la estructura
             categoriaActual = '';
             resetMediaForm();
         }
@@ -473,7 +502,6 @@
         // Grabar Audio utilizando micrófono nativo
         window.toggleGrabacionAudio = async function() {
             if (!isRecording) {
-                // Iniciar grabación
                 try {
                     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                     mediaRecorder = new MediaRecorder(stream);
@@ -491,8 +519,6 @@
                             recordingStatus.innerHTML = `<span class="material-icons-round" style="font-size:16px;">check_circle</span> Audio grabado listo para guardar.`;
                         };
                         reader.readAsDataURL(audioBlob);
-                        
-                        // Apagar el micrófono del teléfono
                         stream.getTracks().forEach(track => track.stop());
                     });
 
@@ -505,7 +531,6 @@
                     alert("Por favor, acepta los permisos de micrófono en tu navegador para grabar audios.");
                 }
             } else {
-                // Detener grabación
                 if (mediaRecorder) {
                     mediaRecorder.stop();
                 }
@@ -528,7 +553,6 @@
         window.guardarNuevaNota = async function() {
             const texto = noteTextInput.value.trim();
             
-            // Permitimos guardar si hay texto, foto o audio
             if (texto === '' && !base64ImageData && !base64AudioData) {
                 alert('Escribe un texto o añade multimedia antes de guardar.');
                 return;
@@ -590,7 +614,6 @@
                 return;
             }
 
-            // Ordenar: Primero las activas y al final las tachadas
             notas.sort((a, b) => {
                 if (a.eliminada && !b.eliminada) return 1;
                 if (!a.eliminada && b.eliminada) return -1;
@@ -598,7 +621,6 @@
             });
 
             for (const nota of notas) {
-                // Borrado definitivo automático tras 7 días
                 if (nota.eliminada && (ahora - nota.fechaEliminacion > unaSemanaEnMilisegundos)) {
                     try {
                         const notaRef = ref(db, `notas/${nota.id}`);
@@ -617,12 +639,10 @@
                 let elementoFoto = '';
                 let elementoAudio = '';
 
-                // Si la nota tiene foto
                 if (nota.foto) {
                     elementoFoto = `<img src="${nota.foto}" class="note-image" alt="Imagen de nota">`;
                 }
 
-                // Si la nota tiene audio grabado
                 if (nota.audio) {
                     elementoAudio = `<audio controls class="note-audio" src="${nota.audio}"></audio>`;
                 }
@@ -665,6 +685,7 @@
 
     <div class="app-container">
         
+        <!-- PANTALLA PRINCIPAL: CATEGORÍAS -->
         <div id="home-screen">
             <header>
                 <h1>NOTAS <span>TONECHO</span></h1>
@@ -689,6 +710,7 @@
             </div>
         </div>
 
+        <!-- PANTALLA DE SECCIÓN INDIVIDUAL -->
         <div id="section-screen" class="section-view">
             <div class="section-header">
                 <button class="btn-back" onclick="volverAInicio()">
@@ -697,9 +719,11 @@
                 <h2 id="section-title" class="section-title">Categoría</h2>
             </div>
 
+            <!-- Editor de nota rápida -->
             <div class="note-form">
                 <textarea id="note-text-input" class="note-input" placeholder="¿Qué tienes en mente hoy?..."></textarea>
                 
+                <!-- Área de previsualización de multimedia -->
                 <div id="preview-container" class="preview-container">
                     <button class="btn-remove-preview" onclick="cancelarFoto()">×</button>
                     <img id="image-preview" src="" alt="Previsualización">
@@ -707,6 +731,7 @@
 
                 <div id="recording-status" class="recording-status"></div>
 
+                <!-- Input oculto para activar la cámara nativa -->
                 <input type="file" id="camera-input" accept="image/*" capture="environment" style="display: none;">
 
                 <div class="media-buttons">
@@ -727,8 +752,10 @@
                 </div>
             </div>
 
+            <!-- Listado de Notas Activo -->
             <div id="notes-list-container" class="notes-list">
-                </div>
+                <!-- Se carga dinámicamente -->
+            </div>
         </div>
 
     </div>
