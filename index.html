@@ -2,13 +2,13 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Notas Tonecho</title>
     <link rel="manifest" href="manifest.json">
     
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
     <style>
-        /* --- DISEÑO MODO OSCURO PREMIUM (DARK TECH) --- */
+        /* --- DISEÑO MODO OSCURO PREMIUM ADAPTADO PARA MÓVILES --- */
         :root {
             --bg-dark-body: #090d16;
             --bg-card: #151f32;
@@ -31,40 +31,42 @@
             margin: 0;
             padding: 0;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            -webkit-tap-highlight-color: transparent; /* Evita el cuadro azul al pulsar en el móvil */
         }
 
         body {
             background-color: var(--bg-dark-body);
             color: var(--text-light);
-            padding: 20px;
+            padding: 10px;
             display: flex;
             justify-content: center;
-            align-items: center;
+            align-items: flex-start;
             min-height: 100vh;
         }
 
         .app-container {
             width: 100%;
-            max-width: 480px;
+            max-width: 450px;
             background: var(--bg-card);
-            border-radius: 28px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            padding: 30px;
-            min-height: 85vh;
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            padding: 20px;
+            min-height: 90vh;
             display: flex;
             flex-direction: column;
             border: 1px solid var(--border-glass);
+            margin-top: 10px;
         }
 
         header {
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             text-align: center;
             border-bottom: 1px solid var(--border-glass);
-            padding-bottom: 20px;
+            padding-bottom: 15px;
         }
 
         h1 {
-            font-size: 28px;
+            font-size: 24px;
             font-weight: 800;
             color: #fff;
             letter-spacing: -0.5px;
@@ -80,23 +82,23 @@
         .categories-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px;
+            gap: 15px;
             margin-top: 10px;
         }
 
         .category-card {
             border: none;
-            border-radius: 20px;
-            padding: 30px 20px;
+            border-radius: 18px;
+            padding: 22px 15px;
             cursor: pointer;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 14px;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            gap: 10px;
+            transition: all 0.2s ease;
             color: white;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
         }
 
         .cat-personal { background: var(--color-personal); }
@@ -104,19 +106,18 @@
         .cat-casa { background: var(--color-casa); }
         .cat-familia { background: var(--color-familia); }
 
-        .category-card:hover, .category-card:active {
-            transform: translateY(-5px) scale(1.02);
-            box-shadow: 0 15px 25px rgba(0, 0, 0, 0.3);
+        .category-card:active {
+            transform: scale(0.96);
             filter: brightness(1.1);
         }
 
         .category-card span.material-icons-round {
-            font-size: 44px;
-            text-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            font-size: 36px;
+            text-shadow: 0 3px 6px rgba(0,0,0,0.2);
         }
 
         .category-card .cat-name {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 700;
             letter-spacing: 0.5px;
         }
@@ -131,44 +132,39 @@
         .section-header {
             display: flex;
             align-items: center;
-            gap: 15px;
-            margin-bottom: 25px;
-            padding-bottom: 15px;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
             border-bottom: 1px solid var(--border-glass);
         }
 
         .btn-back {
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid var(--border-glass);
-            border-radius: 12px;
-            padding: 10px;
+            border-radius: 10px;
+            padding: 8px;
             cursor: pointer;
             color: var(--text-light);
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.2s;
-        }
-        
-        .btn-back:hover {
-            background: rgba(255, 255, 255, 0.15);
         }
 
         .section-title {
-            font-size: 24px;
+            font-size: 20px;
             font-weight: 800;
             text-transform: capitalize;
             color: #fff;
             flex-grow: 1;
         }
 
-        /* --- FORMULARIO DE NOTA --- */
+        /* --- FORMULARIO DE NOTA ADAPTADO --- */
         .note-form {
             background: var(--bg-input);
             border: 1px solid var(--border-glass);
-            border-radius: 18px;
-            padding: 18px;
-            margin-bottom: 25px;
+            border-radius: 16px;
+            padding: 14px;
+            margin-bottom: 20px;
             box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
         }
 
@@ -177,10 +173,10 @@
             border: none;
             background: transparent;
             resize: none;
-            font-size: 16px;
+            font-size: 15px;
             outline: none;
-            min-height: 80px;
-            margin-bottom: 15px;
+            min-height: 70px;
+            margin-bottom: 10px;
             color: var(--text-light);
         }
         
@@ -192,67 +188,50 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             border-top: 1px solid rgba(255, 255, 255, 0.05);
-            padding-top: 15px;
+            padding-top: 12px;
         }
 
         .btn-action {
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid var(--border-glass);
-            padding: 10px 16px;
-            border-radius: 12px;
+            padding: 8px 12px;
+            border-radius: 10px;
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 8px;
-            font-size: 14px;
+            gap: 6px;
+            font-size: 13px;
             font-weight: 600;
             color: var(--text-muted);
-            transition: all 0.2s;
-        }
-
-        .btn-action:hover {
-            background: rgba(255, 255, 255, 0.08);
-            color: var(--text-light);
-            border-color: rgba(255, 255, 255, 0.2);
         }
 
         .btn-add-note {
             background: linear-gradient(135deg, #1dd1a1, #10ac84);
             color: white;
             border: none;
-            padding: 10px 22px;
+            padding: 8px 16px;
             font-weight: 700;
         }
-        .btn-add-note:hover {
-            filter: brightness(1.1);
-            box-shadow: 0 4px 15px rgba(29, 209, 161, 0.4);
-        }
 
-        /* --- LISTADO DE NOTAS --- */
+        /* --- LISTADO DE NOTAS ADAPTADO --- */
         .notes-list {
             display: flex;
             flex-direction: column;
-            gap: 15px;
-            margin-top: 10px;
+            gap: 12px;
+            margin-top: 5px;
         }
 
         .note-item {
-            background: rgba(255, 255, 255, 0.03);
+            background: rgba(255, 255, 255, 0.02);
             border: 1px solid var(--border-glass);
-            border-radius: 16px;
-            padding: 18px;
+            border-radius: 14px;
+            padding: 14px;
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
-            gap: 15px;
-            transition: all 0.2s;
-        }
-        
-        .note-item:hover {
-            background: rgba(255, 255, 255, 0.05);
-            border-color: rgba(255, 255, 255, 0.15);
+            align-items: center;
+            gap: 12px;
         }
 
         .note-content-wrapper {
@@ -260,23 +239,23 @@
             flex-direction: column;
             gap: 4px;
             flex-grow: 1;
+            word-break: break-word;
         }
 
         .note-content {
-            font-size: 15px;
-            line-height: 1.5;
+            font-size: 14px;
+            line-height: 1.4;
             color: var(--text-light);
         }
 
         .note-expiry {
-            font-size: 11px;
+            font-size: 10px;
             color: var(--danger);
             font-weight: 600;
         }
 
         .note-item.deleted {
-            opacity: 0.4;
-            background: rgba(255, 255, 255, 0.01);
+            opacity: 0.45;
         }
 
         .note-item.deleted .note-content {
@@ -286,7 +265,7 @@
 
         .note-actions {
             display: flex;
-            gap: 8px;
+            gap: 4px;
         }
 
         .btn-icon {
@@ -294,28 +273,21 @@
             border: none;
             cursor: pointer;
             color: var(--text-muted);
-            padding: 6px;
+            padding: 8px;
             border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.2s;
         }
 
-        .btn-icon:hover {
-            background: rgba(255, 107, 107, 0.1);
-            color: var(--danger);
-        }
-
-        .btn-restore:hover {
-            background: rgba(29, 209, 161, 0.1);
-            color: var(--success);
+        .btn-icon:active {
+            background: rgba(255, 107, 107, 0.15);
         }
     </style>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getDatabase, ref, set, push, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
         // Configuración de tu base de datos de Notas Tonecho
         const firebaseConfig = {
@@ -331,8 +303,7 @@
 
         // Inicializar la conexión
         const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const notasCollection = collection(db, "notas");
+        const db = getDatabase(app);
 
         // Elementos de la interfaz
         const homeScreen = document.getElementById('home-screen');
@@ -342,7 +313,7 @@
         const notesListContainer = document.getElementById('notes-list-container');
 
         let categoriaActual = '';
-        let unsubscribe = null; 
+        let currentQueryRef = null;
 
         // Navegación: Abrir sección y sincronizar en tiempo real con tu base de datos
         window.abrirSeccion = function(categoria) {
@@ -352,16 +323,25 @@
             sectionTitle.textContent = categoria;
             noteTextInput.value = ''; 
 
-            if (unsubscribe) unsubscribe();
+            if (currentQueryRef) {
+                // Limpiar conexiones anteriores
+                onValue(currentQueryRef, () => {});
+            }
 
-            // Buscar en tu base de datos solo las notas de la categoría en la que entraste
-            const q = query(notasCollection, where("categoria", "==", categoriaActual));
+            // Referencia a las notas en Realtime Database
+            const dbRef = ref(db, 'notas');
+            currentQueryRef = dbRef;
             
-            unsubscribe = onSnapshot(q, (snapshot) => {
+            onValue(dbRef, (snapshot) => {
                 const notas = [];
-                snapshot.forEach((doc) => {
-                    notas.push({ id: doc.id, ...doc.data() });
-                });
+                const data = snapshot.val();
+                if (data) {
+                    Object.keys(data).forEach((key) => {
+                        if (data[key].categoria === categoriaActual) {
+                            notas.push({ id: key, ...data[key] });
+                        }
+                    });
+                }
                 renderizarNotas(notas);
             }, (error) => {
                 console.error("Error al leer de la nube: ", error);
@@ -373,10 +353,6 @@
             sectionScreen.style.display = 'none';
             homeScreen.style.display = 'block';
             categoriaActual = '';
-            if (unsubscribe) {
-                unsubscribe();
-                unsubscribe = null;
-            }
         }
 
         // Guardar Nota Nueva en la nube
@@ -388,7 +364,9 @@
             }
 
             try {
-                await addDoc(notasCollection, {
+                const dbRef = ref(db, 'notas');
+                const nuevaNotaRef = push(dbRef);
+                await set(nuevaNotaRef, {
                     categoria: categoriaActual,
                     contenido: texto,
                     eliminada: false,
@@ -397,15 +375,15 @@
                 });
                 noteTextInput.value = ''; 
             } catch (error) {
-                alert("No se ha podido guardar la nota. Revisa la conexión de tu base de datos: " + error.message);
+                alert("No se ha podido guardar la nota: " + error.message);
             }
         }
 
         // Tachar una nota (Se queda una semana guardada en la papelera)
         window.marcarComoEliminada = async function(id) {
             try {
-                const notaRef = doc(db, "notas", id);
-                await updateDoc(notaRef, {
+                const notaRef = ref(db, `notas/${id}`);
+                await update(notaRef, {
                     eliminada: true,
                     fechaEliminacion: Date.now()
                 });
@@ -417,8 +395,8 @@
         // Restaurar nota tachada
         window.restaurarNota = async function(id) {
             try {
-                const notaRef = doc(db, "notas", id);
-                await updateDoc(notaRef, {
+                const notaRef = ref(db, `notas/${id}`);
+                await update(notaRef, {
                     eliminada: false,
                     fechaEliminacion: null
                 });
@@ -449,7 +427,8 @@
                 // Borrado definitivo automático tras 7 días
                 if (nota.eliminada && (ahora - nota.fechaEliminacion > unaSemanaEnMilisegundos)) {
                     try {
-                        await deleteDoc(doc(db, "notas", nota.id));
+                        const notaRef = ref(db, `notas/${nota.id}`);
+                        await remove(notaRef);
                     } catch (e) {
                         console.error("Error en la auto-limpieza: ", e);
                     }
@@ -469,13 +448,13 @@
                     textoExpiracion = `<span class="note-expiry">Se elimina en ${diasRestantes} d.</span>`;
                     botonAccion = `
                         <button class="btn-icon btn-restore" title="Recuperar" onclick="restaurarNota('${nota.id}')">
-                            <span class="material-icons-round">restore</span>
+                            <span class="material-icons-round" style="color: var(--success);">restore</span>
                         </button>
                     `;
                 } else {
                     botonAccion = `
                         <button class="btn-icon" title="Archivar" onclick="marcarComoEliminada('${nota.id}')">
-                            <span class="material-icons-round">delete</span>
+                            <span class="material-icons-round" style="color: var(--danger);">delete</span>
                         </button>
                     `;
                 }
