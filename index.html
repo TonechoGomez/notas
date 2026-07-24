@@ -392,12 +392,6 @@
             color: var(--text-light);
         }
 
-        .media-badges {
-            display: flex;
-            gap: 6px;
-            font-size: 12px;
-        }
-
         .note-image-thumb {
             width: 100%;
             max-height: 140px;
@@ -517,7 +511,7 @@
         .modal-zoom img { max-width: 95%; max-height: 95%; object-fit: contain; border-radius: 8px; }
     </style>
 
-    <!-- FIREBASE -->
+    <!-- FIREBASE DB -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getDatabase, ref, set, push, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
@@ -536,14 +530,14 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // UI Elements
+        // UI
         const homeScreen = document.getElementById('home-screen');
         const sectionScreen = document.getElementById('section-screen');
         const sectionTitle = document.getElementById('section-title');
         const noteTextInput = document.getElementById('note-text-input');
         const notesListContainer = document.getElementById('notes-list-container');
         
-        // Media Elements Form
+        // Media Form
         const cameraInput = document.getElementById('camera-input');
         const previewContainer = document.getElementById('preview-container');
         const imagePreview = document.getElementById('image-preview');
@@ -551,7 +545,7 @@
         const btnMic = document.getElementById('btn-mic');
 
         let categoriaActual = '';
-        let notasLocales = [];
+        let todasLasNotasGlobales = {};
         
         let base64ImageData = null;
         let mediaRecorder = null;
@@ -567,21 +561,17 @@
         let modalAudioChunks = [];
         let modalIsRecording = false;
 
-        // Sincronización en tiempo real general para contadores
+        // SUSCRIPCIÓN EN TIEMPO REAL TOTAL A FIREBASE
         const dbRefAll = ref(db, 'notas');
         onValue(dbRefAll, (snapshot) => {
-            const data = snapshot.val() || {};
-            actualizarContadoresCategorias(data);
+            todasLasNotasGlobales = snapshot.val() || {};
             
+            // 1. Actualizar números de las tarjetas de inicio
+            actualizarContadoresCategorias(todasLasNotasGlobales);
+            
+            // 2. Si hay una sección abierta, refrescarla automáticamente en tiempo real
             if (categoriaActual) {
-                const notas = [];
-                Object.keys(data).forEach((key) => {
-                    if (data[key].categoria === categoriaActual) {
-                        notas.push({ id: key, ...data[key] });
-                    }
-                });
-                notasLocales = notas;
-                renderizarNotas(notasLocales);
+                refrescarVistaActual();
             }
         });
 
@@ -598,13 +588,23 @@
             document.getElementById('badge-familia').textContent = `${counts.familia} u.`;
         }
 
+        function refrescarVistaActual() {
+            const notasFiltradas = [];
+            Object.keys(todasLasNotasGlobales).forEach((key) => {
+                if (todasLasNotasGlobales[key].categoria === categoriaActual) {
+                    notasFiltradas.push({ id: key, ...todasLasNotasGlobales[key] });
+                }
+            });
+            renderizarNotas(notasFiltradas);
+        }
+
         window.abrirSeccion = function(categoria) {
             categoriaActual = categoria;
             homeScreen.style.display = 'none';
             sectionScreen.style.display = 'flex';
             sectionTitle.textContent = categoria;
             resetMediaForm();
-            renderizarNotas(notasLocales.filter(n => n.categoria === categoriaActual));
+            refrescarVistaActual();
         }
 
         window.volverAInicio = function() {
@@ -730,7 +730,7 @@
 
         // INTEGRACIÓN CON GOOGLE CALENDAR
         window.crearEventoGoogleCalendar = function(id) {
-            const nota = notasLocales.find(n => n.id === id);
+            const nota = todasLasNotasGlobales[id];
             if (!nota) return;
 
             const titulo = encodeURIComponent(nota.contenido || "Nota de Tonecho");
@@ -743,7 +743,7 @@
             window.open(url, '_blank');
         }
 
-        // MOSTRAR NOTAS Y REORDENACIÓN
+        // DIBUJAR NOTAS
         async function renderizarNotas(notas) {
             notesListContainer.innerHTML = '';
             const ahora = Date.now();
@@ -754,11 +754,11 @@
                 return;
             }
 
-            // Ordenamiento por posición o fecha de creación
+            // Ordenamiento por posición
             notas.sort((a, b) => (a.orden || a.fechaCreacion) - (b.orden || b.fechaCreacion));
 
             for (const nota of notas) {
-                // Auto-limpieza a los 7 días de estar tachado
+                // Auto-borrado tras 7 días
                 if (nota.tachado && nota.fechaTachado && (ahora - nota.fechaTachado > sieteDiasMs)) {
                     await eliminarNotaDefinitiva(nota.id);
                     continue;
@@ -800,13 +800,12 @@
                     </div>
                 `;
 
-                // Eventos Drag & Drop PC
+                // Drag & Drop
                 notaDiv.addEventListener('dragstart', handleDragStart);
                 notaDiv.addEventListener('dragover', handleDragOver);
                 notaDiv.addEventListener('drop', handleDrop);
                 notaDiv.addEventListener('dragend', handleDragEnd);
 
-                // Eventos táctiles Móvil
                 const handle = notaDiv.querySelector('.drag-handle');
                 handle.addEventListener('touchstart', handleTouchStart, { passive: false });
                 handle.addEventListener('touchmove', handleTouchMove, { passive: false });
@@ -816,7 +815,7 @@
             }
         }
 
-        // DRAG & DROP LÓGICA DE REORDENADO
+        // LÓGICA REORDENAR POR ARRASTRE
         let dragSrcId = null;
 
         function handleDragStart(e) {
@@ -834,7 +833,7 @@
             if (e.stopPropagation) e.stopPropagation();
             const targetId = this.dataset.id;
             if (dragSrcId && targetId && dragSrcId !== targetId) {
-                reordenarNotasArray(dragSrcId, targetId);
+                await reordenarNotasArray(dragSrcId, targetId);
             }
             return false;
         }
@@ -877,10 +876,11 @@
             touchDraggedDiv.classList.remove('dragging');
             
             const newOrderIds = Array.from(notesListContainer.children).map(div => div.dataset.id);
-            newOrderIds.forEach((id, index) => {
+            for (let index = 0; index < newOrderIds.length; index++) {
+                const id = newOrderIds[index];
                 const notaRef = ref(db, `notas/${id}`);
-                update(notaRef, { orden: index });
-            });
+                await update(notaRef, { orden: index });
+            }
 
             touchDraggedDiv = null;
             dragSrcId = null;
@@ -895,17 +895,18 @@
                 ids.splice(fromIndex, 1);
                 ids.splice(toIndex, 0, fromId);
 
-                ids.forEach((id, index) => {
+                for (let index = 0; index < ids.length; index++) {
+                    const id = ids[index];
                     const notaRef = ref(db, `notas/${id}`);
-                    update(notaRef, { orden: index });
-                });
+                    await update(notaRef, { orden: index });
+                }
             }
         }
 
-        // --- MODAL DETALLE / EDICIÓN / ZOOM ---
+        // --- MODAL DETALLE Y EDICIÓN ---
         window.abrirModalDetalle = function(id) {
             itemEditandoId = id;
-            const nota = notasLocales.find(n => n.id === id);
+            const nota = todasLasNotasGlobales[id];
             if (!nota) return;
 
             document.getElementById('edit-texto').value = nota.contenido || '';
